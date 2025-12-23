@@ -1,0 +1,15 @@
+import yfinance as yf
+
+ticker = "TSLA"
+
+data = yf.download(ticker, start="2025-10-21", end="2025-12-21")
+
+data = data[["Close"]]
+
+data.reset_index(inplace=True)
+
+data.columns = ["Date", "Closing Price"]
+
+data.to_csv("data/TSLA_Prices.csv", index=False)
+
+print("CSV created with only Date and Closing Price columns.")

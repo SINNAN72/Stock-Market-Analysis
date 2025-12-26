@@ -5,7 +5,7 @@ import statistics as stats
 def read_data():
     data = []
 
-    with open("data/SSNLF_Prices.csv", "r") as file:
+    with open("data/TSLA_Prices.csv", "r") as file:
         reader = csv.reader(file)
         next(reader)
         
@@ -61,20 +61,20 @@ def volatility(data, window_size):
         
     return vol
 
-def signal(short_ma, long_ma, volatility_values, min_vol = 1.0):
+def signal(short_ma, long_ma,  trend,  volatility_values, min_vol = 1.0):
     if len(short_ma) == 0 or len(long_ma) == 0:
         return "Not enough data for signal"
     
     if volatility_values < min_vol:
         return "Low Volatility - Signal Ignore"
     
-    if short_ma[-1] > long_ma[-1]:
+    if short_ma[-1] > long_ma[-1] and trend == "Upward Trend":
         return "BUY Signal"
-    if short_ma[-1] < long_ma[-1]:
+    if short_ma[-1] < long_ma[-1] and trend == "Downward Trend":
         return "SELL Signal"
     else:
         return "HOLD"
-    
+
 def buy_sell(short_ma, long_ma, short_w, long_w):
     buy_points = []
     sell_points = []
@@ -121,26 +121,33 @@ def export_result(data, short_ma, long_ma, short_w, long_w, filename="trend_anal
             writer.writerow([i, data[i], s, l])
 
 if __name__ == "__main__":
-    data = read_data()
-    average = moving_average(data, window_size=5)
-    short_window = 5
+    data = read_data() #data reading
+    
+    short_window = 5 # window sizes
     long_window = 10
-    short_ma = moving_average(data, short_window)
+    
+    short_ma = moving_average(data, short_window) # indicators
     long_ma = moving_average(data, long_window)
     
-    short_term_trend = detect_trend(short_ma)
-    volatility_values = volatility(data, window_size=5)
-    latest_volatility = volatility_values[-1] 
+    average = moving_average(data, window_size=5)
 
-    signal_result = signal(short_ma, long_ma, latest_volatility)
-    strength = trend_strength(short_ma)
-    buy, sell = buy_sell(short_ma, long_ma, short_window, long_window)
-    export_result(data, short_ma, long_ma, short_window, long_window)
+    volatility_values = volatility(data, window_size=5) # volatility
+    latest_volatility = volatility_values[-1] 
     
-    print("5-Day Moving Averages:", average)
-    print("Short-Term Trend:", short_term_trend)
+    market_trend = detect_trend(long_ma) # trend detection
+    strength = trend_strength(long_ma)
+
+    signal_result = signal(short_ma, long_ma, market_trend, latest_volatility) # signal 
+    
+    buy, sell = buy_sell(short_ma, long_ma, short_window, long_window) # buy/sell
+    
+    # export_result(data, short_ma, long_ma, short_window, long_window)
+    
+    print("Market Trend:", market_trend)    # Outputs
     print("Trend Strength:", strength)
     print("Latest Volatility Values:", round(latest_volatility, 2))
     print("Trading Signal:", signal_result)
-    print("Analysis exported to CSV file.")
-    ploting(data, short_ma, long_ma, short_window, long_window, buy, sell)
+    
+    # print("Analysis exported to CSV file.")
+    
+    ploting(data, short_ma, long_ma, short_window, long_window, buy, sell) #Graph plotting

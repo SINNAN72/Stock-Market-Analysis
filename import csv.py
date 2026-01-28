@@ -5,14 +5,13 @@ import statistics as stats
 
 def read_data():
     data = []
-    file_path = "data/AMZN_Prices.csv"
+    file_path = "data/TSLA_Prices.csv"
 
     stock_name = os.path.basename(file_path).replace("_Prices.csv", "")
 
     with open(file_path, "r") as file:
         reader = csv.reader(file)
         next(reader)
-        
         for row in reader:
             data.append(float(row[1]))
 
@@ -175,11 +174,11 @@ if __name__ == "__main__":
     
     # export_result(data, short_ma, long_ma, short_window, long_window)
     
-    print("Market Trend:\t\t    ", market_trend)    # Outputs
-    print("Trend Strength:\t\t    ", strength)
-    print("Latest Volatility Values:\t", round(latest_volatility, 2))
-    print("Trading Signal:\t\t    ", signal_result)
-    print("signal Accuracy (%):\t    ", round(accuracy, 2))
+    print("Market Trend:", market_trend)    # Outputs
+    print("Trend Strength:", strength)
+    print("Latest Volatility Values:", round(latest_volatility, 2))
+    print("Trading Signal:", signal_result)
+    print("signal Accuracy (%): ", round(accuracy, 2))
     
     # print("Analysis exported to CSV file.")
     

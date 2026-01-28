@@ -1,15 +1,18 @@
 import yfinance as yf
+import os
 
-ticker = "SSNLF"
+ticker = "ETHUSDT"
 
-data = yf.download(ticker, start="2025-10-21", end="2025-12-21")
+file_path = 'data/ETH_Prices.csv'
 
-data = data[["Close"]]
+data = yf.download(ticker, period = '120d', interval = '1d')
 
-data.reset_index(inplace=True)
+data = data[["Close"]].reset_index()
 
 data.columns = ["Date", "Closing Price"]
 
-data.to_csv("data/SSNLF_Prices.csv", index=False)
+os.makedirs("data", exist_ok=True)
+
+data.to_csv(file_path, index=False)
 
 print("CSV created with only Date and Closing Price columns.")

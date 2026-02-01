@@ -5,11 +5,13 @@ import statistics as stats
 
 def read_data():
     data = []
-    file_path = "data/AMZN_Prices.csv"
+    # Resolve CSV path relative to this script so it works
+    # no matter what the current working directory is.
+    file_path = os.path.join(os.path.dirname(__file__), "data", "AMZN_Prices.csv")
 
     stock_name = os.path.basename(file_path).replace("_Prices.csv", "")
 
-    with open(file_path, "r") as file:
+    with open(file_path, "r", newline="") as file:
         reader = csv.reader(file)
         next(reader)
         

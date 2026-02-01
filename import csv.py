@@ -171,12 +171,12 @@ def export_result(data, short_ma, long_ma, short_w, long_w, filename="trend_anal
             writer.writerow([i, data[i], s, l])
 
 if __name__ == "__main__":
-    # data, stock_name = fetch_data(market="stock_csv", file_path="data/TSLA_Prices.csv") #data reading
-    # data, stock_name = fetch_data(market="yahoo", symbol="TSLA")
+    data, stock_name = fetch_data(market="stock_csv", file_path="data/TSLA_Prices.csv") #data reading
+    data, stock_name = fetch_data(market="yahoo", symbol="TSLA")
     data, stock_name = fetch_data(market="crypto", symbol="BTCUSDT")
     
-    short_window = 5 # window sizes
-    long_window = 13
+    short_window = 7 # window sizes
+    long_window = 14
     
     short_ma = moving_average(data, short_window) # indicators
     long_ma = moving_average(data, long_window)

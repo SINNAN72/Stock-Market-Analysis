@@ -39,12 +39,17 @@ def fetch_data(market="stock", symbol=None, file_path=None):
     
 
 def moving_average(data, window_size):
+    
+    
+    prices = [float(p) for p in data]
     averages = []
     
-    for i in range(len(data) - window_size + 1):
-        window = data[i : i + window_size]
-        avg = sum(window) / window_size
-        averages.append(avg)
+    for i in range(len(prices)):
+        if i + 1 < window_size:
+            averages.append(None)
+        else:
+            window = prices[i + 1 - window_size : i + 1]
+            averages.append(sum(window) / window_size)
         
     return averages
 
@@ -110,15 +115,20 @@ def buy_sell(short_ma, long_ma, short_w, long_w):
     buy_points = []
     sell_points = []
     
-    start = max(short_w, long_w) - 1
+    # Start after the longer MA has valid values
+    start_idx = long_w
     
-    for i in range(start, len(short_ma)):
+    for i in range(start_idx, len(short_ma)):
         prev_short = short_ma[i - 1]
-        prev_long = long_ma[i - 1 - (long_w - short_w)]
-        
+        prev_long = long_ma[i - 1]
         curr_short = short_ma[i]
-        curr_long = long_ma[i - (long_w - short_w)]
+        curr_long = long_ma[i]
         
+        # Skip if any value is None
+        if prev_short is None or prev_long is None or curr_short is None or curr_long is None:
+            continue
+            
+        # Now safe to compare
         if prev_short <= prev_long and curr_short > curr_long:
             buy_points.append(i)
         elif prev_short >= prev_long and curr_short < curr_long:
@@ -171,12 +181,12 @@ def export_result(data, short_ma, long_ma, short_w, long_w, filename="trend_anal
             writer.writerow([i, data[i], s, l])
 
 if __name__ == "__main__":
-    # data, stock_name = fetch_data(market="stock_csv", file_path="data/TSLA_Prices.csv") #data reading
-    # data, stock_name = fetch_data(market="yahoo", symbol="TSLA")
+    data, stock_name = fetch_data(market="stock_csv", file_path="data/TSLA_Prices.csv") #data reading
+    data, stock_name = fetch_data(market="yahoo", symbol="TSLA")
     data, stock_name = fetch_data(market="crypto", symbol="BTCUSDT")
     
-    short_window = 5 # window sizes
-    long_window = 13
+    short_window = 7 # window sizes
+    long_window = 14
     
     short_ma = moving_average(data, short_window) # indicators
     long_ma = moving_average(data, long_window)

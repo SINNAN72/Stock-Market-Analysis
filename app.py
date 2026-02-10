@@ -19,7 +19,7 @@ STOCK_SYMBOLS = [
     "MSFT",
     "GOOGL",
     "NVDA"
-]
+] 
 
 PSX_SYMBOLS = [
     "PPL.KA",

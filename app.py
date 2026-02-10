@@ -4,7 +4,7 @@ import pandas as pd
 import yfinance as yf
 import requests
 
-from main_2 import buy_sell, detect_trend, moving_average, signal, signal_accuracy, trend_strength, volatility
+from main import buy_sell, detect_trend, moving_average, signal, signal_accuracy, trend_strength, volatility
 
 CRYPTO_SYMBOLS = {
     "Bitcoin (BTC)": "BTCUSDT",

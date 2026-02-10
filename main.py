@@ -2,31 +2,54 @@ import os
 import csv
 import matplotlib.pyplot as plt
 import statistics as stats
+import yfinance as yf
+import requests
 
-def read_data():
-    data = []
-    # Resolve CSV path relative to this script so it works
-    # no matter what the current working directory is.
-    file_path = os.path.join(os.path.dirname(__file__), "data", "AMZN_Prices.csv")
-
-    stock_name = os.path.basename(file_path).replace("_Prices.csv", "")
-
-    with open(file_path, "r", newline="") as file:
-        reader = csv.reader(file)
-        next(reader)
+def fetch_data(market="stock", symbol=None, file_path=None):
+    if market == "stock_csv":
+        prices = []
+        asset_name = os.path.basename(file_path).replace("_Prices.csv", "")
         
-        for row in reader:
-            data.append(float(row[1]))
+        with open(file_path, "r") as file:
+            reader = csv.reader(file)
+            next(reader)
+            
+            for row in reader:
+                prices.append(float(row[1]))
+        
+        return prices, asset_name
 
-    return data, stock_name
+    elif market == "yahoo":
+        data = yf.download(symbol, period="120d", interval="1d")
+        prices = data["Close"].squeeze().dropna().tolist()
+        return prices, symbol
+    
+    elif market == "crypto":
+        url = "https://api.binance.com/api/v3/klines"
+        params = {"symbol": symbol, "interval": "1d", "limit": 120}
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        data = response.json()
+        
+        prices = [float(candle[4]) for candle in data]
+        return prices, symbol
+    
+    else:
+        raise ValueError("Invalid market type!")
+    
 
 def moving_average(data, window_size):
+    
+    
+    prices = [float(p) for p in data]
     averages = []
     
-    for i in range(len(data) - window_size + 1):
-        window = data[i : i + window_size]
-        avg = sum(window) / window_size
-        averages.append(avg)
+    for i in range(len(prices)):
+        if i + 1 < window_size:
+            averages.append(None)
+        else:
+            window = prices[i + 1 - window_size : i + 1]
+            averages.append(sum(window) / window_size)
         
     return averages
 
@@ -92,15 +115,20 @@ def buy_sell(short_ma, long_ma, short_w, long_w):
     buy_points = []
     sell_points = []
     
-    start = max(short_w, long_w) - 1
+    # Start after the longer MA has valid values
+    start_idx = long_w
     
-    for i in range(start, len(short_ma)):
+    for i in range(start_idx, len(short_ma)):
         prev_short = short_ma[i - 1]
-        prev_long = long_ma[i - 1 - (long_w - short_w)]
-        
+        prev_long = long_ma[i - 1]
         curr_short = short_ma[i]
-        curr_long = long_ma[i - (long_w - short_w)]
+        curr_long = long_ma[i]
         
+        # Skip if any value is None
+        if prev_short is None or prev_long is None or curr_short is None or curr_long is None:
+            continue
+            
+        # Now safe to compare
         if prev_short <= prev_long and curr_short > curr_long:
             buy_points.append(i)
         elif prev_short >= prev_long and curr_short < curr_long:
@@ -130,14 +158,14 @@ def signal_accuracy(data, buy_points, sell_points, lookahead=3):
     
 def plot_chart(data, ma_short, ma_long, short_w, long_w, buy, sell, stock_name):
     plt.figure(figsize = (12, 6))
-    plt.plot(data, label = "Stock Prices", alpha = 0.6)
+    plt.plot(data, label =f"{stock_name} Prices", alpha = 0.6)
     plt.plot(range(short_w - 1, len(data)), ma_short, label = f"{short_w}-Day Moving Average")
     plt.plot(range(long_w - 1, len(data)), ma_long, label = f"{long_w}-Day Moving Average")
     plt.scatter(buy, [data[i] for i in buy], marker = '^', color = 'g', label = 'BUY', s = 100)
     plt.scatter(sell, [data[i] for i in sell], marker = 'v', color = 'r', label = 'SELL', s = 100)
     plt.xlabel("Days")
     plt.ylabel("Price")
-    plt.title(f"\"{stock_name}\" Stock Trend Analysis")
+    plt.title(f"\"{stock_name}\" Market Trend Analysis")
     plt.legend()
     plt.grid(True)
     plt.show()
@@ -153,7 +181,9 @@ def export_result(data, short_ma, long_ma, short_w, long_w, filename="trend_anal
             writer.writerow([i, data[i], s, l])
 
 if __name__ == "__main__":
-    data, stock_name = read_data() #data reading
+    data, stock_name = fetch_data(market="stock_csv", file_path="data/TSLA_Prices.csv") #data reading
+    data, stock_name = fetch_data(market="yahoo", symbol="TSLA")
+    data, stock_name = fetch_data(market="crypto", symbol="BTCUSDT")
     
     short_window = 7 # window sizes
     long_window = 14
@@ -177,11 +207,11 @@ if __name__ == "__main__":
     
     # export_result(data, short_ma, long_ma, short_window, long_window)
     
-    print("Market Trend:\t\t    ", market_trend)    # Outputs
-    print("Trend Strength:\t\t    ", strength)
-    print("Latest Volatility Values:\t", round(latest_volatility, 2))
-    print("Trading Signal:\t\t    ", signal_result)
-    print("signal Accuracy (%):\t    ", round(accuracy, 2))
+    print("Market Trend:", market_trend)    # Outputs
+    print("Trend Strength:", strength)
+    print("Latest Volatility Values:", round(latest_volatility, 2))
+    print("Trading Signal:", signal_result)
+    print("signal Accuracy (%): ", round(accuracy, 2))
     
     # print("Analysis exported to CSV file.")
     
